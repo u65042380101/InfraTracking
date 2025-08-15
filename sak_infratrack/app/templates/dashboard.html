@@ -5,119 +5,142 @@
 {% block content %}
 <h1 class="text-2xl font-bold mb-6">BranchInfo Dashboard</h1>
 
+<!-- Search box -->
 <div class="mb-6">
-    <input
-        type="text"
-        id="searchInput"
-        placeholder="ค้นหาเลขสาขาหรือชื่อสาขา..."
-        class="w-full px-4 py-2 border rounded focus:outline-none focus:ring"
-    />
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="ค้นหาเลขสาขาหรือชื่อสาขา..."
+    class="w-full px-4 py-2 border rounded focus:outline-none focus:ring"
+  />
 </div>
 
+<!-- Card grid -->
 <div id="branchGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for branch in branch_list %}
-    <div class="branch-card bg-white shadow-lg rounded-xl border border-gray-200 p-5 hover:shadow-xl transition-shadow duration-300 cursor-pointer"
-         data-branch-code="{{ branch.branch_code }}"
-         onclick="showInternetLinks('{{ branch.branch_code }}', '{{ branch.branch_name|escapejs }}')">
-        <h2 class="text-lg font-semibold text-gray-800 mb-2">{{ branch.branch_name }}</h2>
-        <p class="text-sm text-gray-500 mb-3">Branch Code: <span class="font-medium">{{ branch.branch_code }}</span></p>
-        <div class="space-y-1 text-sm text-gray-700">
-            <p><span class="font-semibold">Address:</span> {{ branch.address }}</p>
-            <p><span class="font-semibold">District:</span> {{ branch.district }}</p>
-            <p><span class="font-semibold">Region:</span> {{ branch.region }}</p>
-            <p><span class="font-semibold">Province:</span> {{ branch.province }}</p>
-            <p><span class="font-semibold">Mobile:</span> {{ branch.mobile_number }}</p>
-            <p><span class="font-semibold">Tel 6 Digits:</span> {{ branch.tel_6_digits }}</p>
-        </div>
+  {% for branch in branch_list %}
+  <!-- การ์ด: คลิกทั้งใบเพื่อเปิด popup -->
+  <div
+    class="branch-card cursor-pointer flex flex-col gap-4 bg-gray-100 p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
+    data-branch-code="{{ branch.branch_code|lower }}"
+    data-branch-name="{{ branch.branch_name|lower }}"
+    onclick="showInternetLinks('{{ branch.branch_code }}','{{ branch.branch_name|escapejs }}')"
+    role="button" tabindex="0"
+    onkeydown="if(event.key==='Enter' || event.key===' '){showInternetLinks('{{ branch.branch_code }}','{{ branch.branch_name|escapejs }}');}"
+  >
+    <!-- หัวการ์ด -->
+    <div class="bg-white px-4 py-2 rounded shadow font-semibold text-gray-800">
+      {{ branch.branch_name }}
     </div>
-    {% empty %}
-    <p class="col-span-full text-center text-gray-500 py-6">No data available.</p>
-    {% endfor %}
+
+    <!-- เนื้อหา -->
+    <div class="bg-white p-4 rounded-lg shadow text-sm text-gray-700 space-y-1 flex-1">
+      <p><span class="font-semibold">Address:</span> {{ branch.address }}</p>
+      <p><span class="font-semibold">District:</span> {{ branch.district }}</p>
+      <p><span class="font-semibold">Region:</span> {{ branch.region }}</p>
+      <p><span class="font-semibold">Province:</span> {{ branch.province }}</p>
+      <p><span class="font-semibold">Mobile:</span> {{ branch.mobile_number }}</p>
+      <p><span class="font-semibold">Tel 6 Digits:</span> {{ branch.tel_6_digits }}</p>
+    </div>
+
+    <!-- ปุ่ม: ไม่ทำอะไร และไม่ให้คลิกไปทริกเกอร์การ์ด -->
+    <button
+      type="button"
+      class="bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+      onclick="event.stopPropagation();" aria-disabled="true"
+    >
+      Button
+    </button>
+  </div>
+  {% empty %}
+  <p class="col-span-full text-center text-gray-500 py-6">No data available.</p>
+  {% endfor %}
 </div>
 
 <!-- Modal Popup -->
 <div id="internetLinkModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative">
-        <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
-        <h3 id="modalBranchName" class="text-xl font-bold mb-4"></h3>
-        <div id="modalContent"></div>
-    </div>
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative">
+    <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+    <h3 id="modalBranchName" class="text-xl font-bold mb-4"></h3>
+    <div id="modalContent"></div>
+  </div>
 </div>
 
 <script>
 function showInternetLinks(branchCode, branchName) {
-    const modal = document.getElementById('internetLinkModal');
-    const modalContent = document.getElementById('modalContent');
-    const modalBranchName = document.getElementById('modalBranchName');
-    modalBranchName.textContent = `InternetLink ของสาขา ${branchName} (${branchCode})`;
-    modal.classList.remove('hidden');
-    modalContent.innerHTML = 'Loading...';
+  const modal = document.getElementById('internetLinkModal');
+  const modalContent = document.getElementById('modalContent');
+  const modalBranchName = document.getElementById('modalBranchName');
 
-    fetch(`/api/internet-links/${branchCode}/`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.length === 0) {
-                modalContent.innerHTML = '<p class="text-gray-500">ไม่พบข้อมูล InternetLink</p>';
-                return;
-            }
-            let table = `<table class="min-w-full text-sm text-left border">
-                <thead>
-                    <tr>
-                        <th class="border px-2 py-1">Provider</th>
-                        <th class="border px-2 py-1">FTTx</th>
-                        <th class="border px-2 py-1">Speed</th>
-                        <th class="border px-2 py-1">Start Date</th>
-                        <th class="border px-2 py-1">Last Service</th>
-                        <th class="border px-2 py-1">Service Center</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-            data.forEach(link => {
-                table += `<tr>
-                    <td class="border px-2 py-1">${link.proivider}</td>
-                    <td class="border px-2 py-1">${link.fttx}</td>
-                    <td class="border px-2 py-1">${link.speed}</td>
-                    <td class="border px-2 py-1">${link.start_date}</td>
-                    <td class="border px-2 py-1">${link.last_service}</td>
-                    <td class="border px-2 py-1">${link.service_center}</td>
-                </tr>`;
-            });
-            table += '</tbody></table>';
-            modalContent.innerHTML = table;
-        })
-        .catch(() => {
-            modalContent.innerHTML = '<p class="text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
-        });
+  modalBranchName.textContent = `InternetLink ของสาขา ${branchName} (${branchCode})`;
+  modal.classList.remove('hidden');
+  modalContent.innerHTML = 'Loading...';
+
+  fetch(`/api/internet-links/${branchCode}/`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data || data.length === 0) {
+        modalContent.innerHTML = '<p class="text-gray-500">ไม่พบข้อมูล InternetLink</p>';
+        return;
+      }
+      let table = `<table class="min-w-full text-sm text-left border">
+        <thead>
+          <tr>
+            <th class="border px-2 py-1">Provider</th>
+            <th class="border px-2 py-1">FTTx</th>
+            <th class="border px-2 py-1">Speed</th>
+            <th class="border px-2 py-1">Start Date</th>
+            <th class="border px-2 py-1">Last Service</th>
+            <th class="border px-2 py-1">Service Center</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      data.forEach(link => {
+        table += `<tr>
+          <td class="border px-2 py-1">${link.provider ?? ''}</td>
+          <td class="border px-2 py-1">${link.fttx ?? ''}</td>
+          <td class="border px-2 py-1">${link.speed ?? ''}</td>
+          <td class="border px-2 py-1">${link.start_date ?? ''}</td>
+          <td class="border px-2 py-1">${link.last_service ?? ''}</td>
+          <td class="border px-2 py-1">${link.service_center ?? ''}</td>
+        </tr>`;
+      });
+      table += '</tbody></table>';
+      modalContent.innerHTML = table;
+    })
+    .catch(() => {
+      modalContent.innerHTML = '<p class="text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+    });
 }
 
 function closeModal() {
-    document.getElementById('internetLinkModal').classList.add('hidden');
+  document.getElementById('internetLinkModal').classList.add('hidden');
 }
 
-document.getElementById('searchInput').addEventListener('input', function() {
-    const keyword = this.value.trim().toLowerCase();
-    const cards = document.querySelectorAll('.branch-card');
-    let found = false;
-    cards.forEach(card => {
-        const code = card.getAttribute('data-branch-code');
-        const name = card.getAttribute('data-branch-name');
-        if (code.includes(keyword) || name.includes(keyword)) {
-            card.style.display = '';
-            found = true;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-    // แสดงข้อความถ้าไม่พบข้อมูล
-    let emptyMsg = document.getElementById('emptyMsg');
-    if (!emptyMsg) {
-        emptyMsg = document.createElement('p');
-        emptyMsg.id = 'emptyMsg';
-        emptyMsg.className = 'col-span-full text-center text-gray-500 py-6';
-        emptyMsg.textContent = 'No data available.';
-        document.getElementById('branchGrid').appendChild(emptyMsg);
+document.getElementById('searchInput').addEventListener('input', function () {
+  const keyword = this.value.trim().toLowerCase();
+  const cards = document.querySelectorAll('.branch-card');
+  let found = false;
+
+  cards.forEach(card => {
+    const code = card.getAttribute('data-branch-code');
+    const name = card.getAttribute('data-branch-name');
+    if (code.includes(keyword) || name.includes(keyword)) {
+      card.style.display = '';
+      found = true;
+    } else {
+      card.style.display = 'none';
     }
-    emptyMsg.style.display = found ? 'none' : '';
+  });
+
+  let emptyMsg = document.getElementById('emptyMsg');
+  if (!emptyMsg) {
+    emptyMsg = document.createElement('p');
+    emptyMsg.id = 'emptyMsg';
+    emptyMsg.className = 'col-span-full text-center text-gray-500 py-6';
+    emptyMsg.textContent = 'No data available.';
+    document.getElementById('branchGrid').appendChild(emptyMsg);
+  }
+  emptyMsg.style.display = found ? 'none' : '';
 });
 </script>
 {% endblock %}
