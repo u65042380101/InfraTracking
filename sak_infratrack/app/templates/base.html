@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}infratrack{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 text-sm">
+    <nav
+      class="bg-blue-600 text-white px-4 py-3 flex justify-between items-center"
+    >
+      <div class="font-bold text-lg">Helpdesk Dashboard</div>
+      <div>
+        <a href="{% url 'dashboard' %}" class="mr-4 hover:underline"
+          >Dashboard</a
+        >
+        <a href="" class="mr-4 hover:underline">เพิ่มข้อมูล</a>
+
+      </div>
+    </nav>
+
+    <main class="min-h-screen">{% block content %}{% endblock %}</main>
+
+    <footer class="bg-gray-800 text-white py-4 text-center">
+      &copy; 2025 Help Sak. All rights reserved.
+    </footer>
+  </body>
+</html>

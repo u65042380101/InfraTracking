@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}BranchInfo Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">BranchInfo Dashboard</h1>
+
+<div class="mb-6">
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="ค้นหาเลขสาขาหรือชื่อสาขา..."
+        class="w-full px-4 py-2 border rounded focus:outline-none focus:ring"
+    />
+</div>
+
+<div id="branchGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for branch in branch_list %}
+    <div class="branch-card bg-white shadow-lg rounded-xl border border-gray-200 p-5 hover:shadow-xl transition-shadow duration-300"
+         data-branch-code="{{ branch.branch_code|lower }}"
+         data-branch-name="{{ branch.branch_name|lower }}">
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">{{ branch.branch_name }}</h2>
+        <p class="text-sm text-gray-500 mb-3">Branch Code: <span class="font-medium">{{ branch.branch_code }}</span></p>
+        <div class="space-y-1 text-sm text-gray-700">
+            <p><span class="font-semibold">Address:</span> {{ branch.address }}</p>
+            <p><span class="font-semibold">District:</span> {{ branch.district }}</p>
+            <p><span class="font-semibold">Region:</span> {{ branch.region }}</p>
+            <p><span class="font-semibold">Province:</span> {{ branch.province }}</p>
+            <p><span class="font-semibold">Mobile:</span> {{ branch.mobile_number }}</p>
+            <p><span class="font-semibold">Tel 6 Digits:</span> {{ branch.tel_6_digits }}</p>
+        </div>
+    </div>
+    {% empty %}
+    <p class="col-span-full text-center text-gray-500 py-6">No data available.</p>
+    {% endfor %}
+</div>
+
+<script>
+document.getElementById('searchInput').addEventListener('input', function() {
+    const keyword = this.value.trim().toLowerCase();
+    const cards = document.querySelectorAll('.branch-card');
+    let found = false;
+    cards.forEach(card => {
+        const code = card.getAttribute('data-branch-code');
+        const name = card.getAttribute('data-branch-name');
+        if (code.includes(keyword) || name.includes(keyword)) {
+            card.style.display = '';
+            found = true;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    // แสดงข้อความถ้าไม่พบข้อมูล
+    let emptyMsg = document.getElementById('emptyMsg');
+    if (!emptyMsg) {
+        emptyMsg = document.createElement('p');
+        emptyMsg.id = 'emptyMsg';
+        emptyMsg.className = 'col-span-full text-center text-gray-500 py-6';
+        emptyMsg.textContent = 'No data available.';
+        document.getElementById('branchGrid').appendChild(emptyMsg);
+    }
+    emptyMsg.style.display = found ? 'none' : '';
+});
+</script>
+{% endblock %}
