@@ -21,4 +21,5 @@ from app import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('api/internet-links/<str:branch_code>/', views.internet_links_api, name='internet_links_api'),
 ]
