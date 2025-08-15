@@ -16,6 +16,7 @@ class BranchInfo(models.Model):
 
 class InternetLink(models.Model):
     id = models.AutoField(primary_key=True)
+    branch_id = models.IntegerField()
     branch_name = models.CharField(max_length=255)
     proivider = models.CharField(max_length=255)
     fttx = models.CharField(max_length=255)
