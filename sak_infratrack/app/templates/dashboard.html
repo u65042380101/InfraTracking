@@ -57,7 +57,8 @@
 </div>
 
 <!-- Modal Popup -->
-<div id="internetLinkModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+<div id="internetLinkModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden"
+     onclick="if(event.target === this) closeModal();">
   <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative">
     <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
     <h3 id="modalBranchName" class="text-xl font-bold mb-4"></h3>
@@ -96,7 +97,7 @@ function showInternetLinks(branchCode, branchName) {
         <tbody>`;
       data.forEach(link => {
         table += `<tr>
-          <td class="border px-2 py-1">${link.provider ?? ''}</td>
+          <td class="border px-2 py-1">${link.proivider ?? ''}</td>
           <td class="border px-2 py-1">${link.fttx ?? ''}</td>
           <td class="border px-2 py-1">${link.speed ?? ''}</td>
           <td class="border px-2 py-1">${link.start_date ?? ''}</td>
@@ -133,14 +134,17 @@ document.getElementById('searchInput').addEventListener('input', function () {
   });
 
   let emptyMsg = document.getElementById('emptyMsg');
-  if (!emptyMsg) {
-    emptyMsg = document.createElement('p');
-    emptyMsg.id = 'emptyMsg';
-    emptyMsg.className = 'col-span-full text-center text-gray-500 py-6';
-    emptyMsg.textContent = 'No data available.';
-    document.getElementById('branchGrid').appendChild(emptyMsg);
+  if (!found) {
+    if (!emptyMsg) {
+      emptyMsg = document.createElement('p');
+      emptyMsg.id = 'emptyMsg';
+      emptyMsg.className = 'col-span-full text-center text-gray-500 py-6';
+      emptyMsg.textContent = 'ไม่พบข้อมูลสาขาที่ตรงกับคำค้นหา';
+      document.getElementById('branchGrid').appendChild(emptyMsg);
+    }
+  } else {
+    if (emptyMsg) emptyMsg.remove();
   }
-  emptyMsg.style.display = found ? 'none' : '';
 });
 </script>
 {% endblock %}
