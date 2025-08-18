@@ -1,22 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
   <head>
     <meta charset="UTF-8" />
     <title>{% block title %}infratrack{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @media print {
+        nav, footer { display: none !important; }
+      }
+    </style>
   </head>
   <body class="bg-gray-100 text-sm">
     <nav
       class="bg-blue-600 text-white px-4 py-3 flex justify-between items-center"
     >
-      <div class="font-bold text-lg">Helpdesk Dashboard</div>
-      <div>
+      <div class="font-bold text-lg">
+        <a href="{% url 'dashboard' %}" class="font-bold text-lg hover:underline">
+          infratrack Dashboard
+        </a>
+      </div>
+      {% comment %} <div>
         <a href="{% url 'dashboard' %}" class="mr-4 hover:underline"
           >Dashboard</a
         >
-        <a href="" class="mr-4 hover:underline">เพิ่มข้อมูล</a>
+        <a href="{% url 'add_record' %}" class="mr-4 hover:underline">เพิ่มข้อมูล</a>
 
-      </div>
+      </div> {% endcomment %}
     </nav>
 
     <main class="min-h-screen">{% block content %}{% endblock %}</main>

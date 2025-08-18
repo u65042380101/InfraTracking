@@ -1,68 +1,93 @@
 {% extends "base.html" %}
 
-{% block title %}BranchInfo Dashboard{% endblock %}
+{% block title %}infratrackInfo Dashboard{% endblock %}
 
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">BranchInfo Dashboard</h1>
-
-<!-- Search box -->
-<div class="mb-6">
-  <input
-    type="text"
-    id="searchInput"
-    placeholder="ค้นหาเลขสาขาหรือชื่อสาขา..."
-    class="w-full px-4 py-2 border rounded focus:outline-none focus:ring"
-  />
-</div>
-
-<!-- Card grid -->
-<div id="branchGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-  {% for branch in branch_list %}
-  <!-- การ์ด: คลิกทั้งใบเพื่อเปิด popup -->
-  <div
-    class="branch-card cursor-pointer flex flex-col gap-4 bg-gray-100 p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
-    data-branch-code="{{ branch.branch_code|lower }}"
-    data-branch-name="{{ branch.branch_name|lower }}"
-    onclick="showInternetLinks('{{ branch.branch_code }}','{{ branch.branch_name|escapejs }}')"
-    role="button" tabindex="0"
-    onkeydown="if(event.key==='Enter' || event.key===' '){showInternetLinks('{{ branch.branch_code }}','{{ branch.branch_name|escapejs }}');}"
-  >
-    <!-- หัวการ์ด -->
-    <div class="bg-white px-4 py-2 rounded shadow font-semibold text-gray-800">
-      {{ branch.branch_name }}
-    </div>
-
-    <!-- เนื้อหา -->
-    <div class="bg-white p-4 rounded-lg shadow text-sm text-gray-700 space-y-1 flex-1">
-      <p><span class="font-semibold">Address:</span> {{ branch.address }}</p>
-      <p><span class="font-semibold">District:</span> {{ branch.district }}</p>
-      <p><span class="font-semibold">Region:</span> {{ branch.region }}</p>
-      <p><span class="font-semibold">Province:</span> {{ branch.province }}</p>
-      <p><span class="font-semibold">Mobile:</span> {{ branch.mobile_number }}</p>
-      <p><span class="font-semibold">Tel 6 Digits:</span> {{ branch.tel_6_digits }}</p>
-    </div>
-
-    <!-- ปุ่ม: ไม่ทำอะไร และไม่ให้คลิกไปทริกเกอร์การ์ด -->
-    <button
-      type="button"
-      class="bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-      onclick="event.stopPropagation();" aria-disabled="true"
-    >
-      Button
-    </button>
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-blue-700 mb-4 sm:mb-0 text-center sm:text-left">📊 infratrackInfo Dashboard</h1>
+    <a href="{% url 'summary_report' %}" target="_blank"
+       class="bg-white border border-gray-300 px-4 py-2 rounded-xl shadow text-gray-700 hover:bg-gray-100 transition">
+      สรุปข้อมูล / Export PDF
+    </a>
   </div>
-  {% empty %}
-  <p class="col-span-full text-center text-gray-500 py-6">No data available.</p>
-  {% endfor %}
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+    <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center hover:shadow-xl transition-transform transform hover:-translate-y-1">
+      <span class="text-4xl font-extrabold text-blue-600">{{ today_count }}</span>
+      <span class="mt-2 text-gray-700 font-medium">รายการวันนี้</span>
+    </div>
+    <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center hover:shadow-xl transition-transform transform hover:-translate-y-1">
+      <span class="text-4xl font-extrabold text-green-600">{{ month_count }}</span>
+      <span class="mt-2 text-gray-700 font-medium">รายการเดือนนี้</span>
+    </div>
+    <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col items-center hover:shadow-xl transition-transform transform hover:-translate-y-1">
+      <span class="text-4xl font-extrabold text-orange-600">{{ year_count }}</span>
+      <span class="mt-2 text-gray-700 font-medium">รายการปีนี้</span>
+    </div>
+  </div>
+
+  <!-- Search Input -->
+  <div class="mb-8 flex justify-center">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="🔍 ค้นหาเลขสาขาหรือชื่อสาขา..."
+      class="w-full sm:w-96 px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-500"
+    />
+  </div>
+
+  <!-- Branch Cards -->
+  <div id="branchGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for branch in branch_list %}
+    <div
+      class="branch-card cursor-pointer flex flex-col gap-4 bg-white p-5 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transform transition"
+      data-branch-code="{{ branch.branch_code|lower }}"
+      data-branch-name="{{ branch.branch_name|lower }}"
+      style="display:none"
+      onclick="showInternetLinks('{{ branch.branch_code }}','{{ branch.branch_name|escapejs }}')"
+      role="button"
+      tabindex="0"
+      onkeydown="if(event.key==='Enter' || event.key===' '){showInternetLinks('{{ branch.branch_code }}','{{ branch.branch_name|escapejs }}');}"
+    >
+      <!-- Header -->
+      <div class="text-lg font-bold text-blue-700 border-b pb-2">{{ branch.branch_name }}</div>
+
+      <!-- Info -->
+      <div class="text-sm text-gray-600 space-y-1 flex-1">
+        <p><span class="font-semibold">🏠 Address:</span> {{ branch.address }}</p>
+        <p><span class="font-semibold">📍 District:</span> {{ branch.district }}</p>
+        <p><span class="font-semibold">🗺️ Region:</span> {{ branch.region }}</p>
+        <p><span class="font-semibold">🏢 Province:</span> {{ branch.province }}</p>
+        <p><span class="font-semibold">📱 Mobile:</span> {{ branch.mobile_number }}</p>
+        <p><span class="font-semibold">☎️ Tel 6 Digits:</span> {{ branch.tel_6_digits }}</p>
+      </div>
+
+      <!-- Button -->
+      <a
+        href="{% url 'helpdesk_record' branch.branch_code %}"
+        class="bg-blue-600 text-white py-2 rounded-xl shadow text-center font-medium hover:bg-blue-700 transition"
+        onclick="event.stopPropagation();"
+      >
+        รายละเอียด
+      </a>
+    </div>
+    {% empty %}
+    <p class="col-span-full text-center text-gray-500 py-6">ไม่มีข้อมูลสาขา</p>
+    {% endfor %}
+  </div>
+  <div id="pagination" class="flex justify-center mt-8 gap-2"></div>
 </div>
 
-<!-- Modal Popup -->
-<div id="internetLinkModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden"
+<!-- Modal -->
+<div id="internetLinkModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
      onclick="if(event.target === this) closeModal();">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl p-6 relative">
-    <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
-    <h3 id="modalBranchName" class="text-xl font-bold mb-4"></h3>
-    <div id="modalContent"></div>
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-8 relative">
+    <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+    <h3 id="modalBranchName" class="text-2xl font-bold mb-6 text-blue-700"></h3>
+    <div id="modalContent" class="overflow-x-auto max-h-96"></div>
   </div>
 </div>
 
@@ -74,42 +99,42 @@ function showInternetLinks(branchCode, branchName) {
 
   modalBranchName.textContent = `InternetLink ของสาขา ${branchName} (${branchCode})`;
   modal.classList.remove('hidden');
-  modalContent.innerHTML = 'Loading...';
+  modalContent.innerHTML = '<p class="text-gray-500 py-4">กำลังโหลด...</p>';
 
   fetch(`/api/internet-links/${branchCode}/`)
     .then(r => r.json())
     .then(data => {
       if (!data || data.length === 0) {
-        modalContent.innerHTML = '<p class="text-gray-500">ไม่พบข้อมูล InternetLink</p>';
+        modalContent.innerHTML = '<p class="text-gray-500 py-4">ไม่พบข้อมูล InternetLink</p>';
         return;
       }
-      let table = `<table class="min-w-full text-sm text-left border">
-        <thead>
+      let table = `<table class="min-w-full text-sm text-left border border-gray-300 rounded-lg overflow-hidden">
+        <thead class="bg-gray-100 sticky top-0">
           <tr>
-            <th class="border px-2 py-1">Provider</th>
-            <th class="border px-2 py-1">FTTx</th>
-            <th class="border px-2 py-1">Speed</th>
-            <th class="border px-2 py-1">Start Date</th>
-            <th class="border px-2 py-1">Last Service</th>
-            <th class="border px-2 py-1">Service Center</th>
+            <th class="border px-3 py-2">Provider</th>
+            <th class="border px-3 py-2">FTTx</th>
+            <th class="border px-3 py-2">Speed</th>
+            <th class="border px-3 py-2">Start Date</th>
+            <th class="border px-3 py-2">Last Service</th>
+            <th class="border px-3 py-2">Service Center</th>
           </tr>
         </thead>
         <tbody>`;
       data.forEach(link => {
-        table += `<tr>
-          <td class="border px-2 py-1">${link.proivider ?? ''}</td>
-          <td class="border px-2 py-1">${link.fttx ?? ''}</td>
-          <td class="border px-2 py-1">${link.speed ?? ''}</td>
-          <td class="border px-2 py-1">${link.start_date ?? ''}</td>
-          <td class="border px-2 py-1">${link.last_service ?? ''}</td>
-          <td class="border px-2 py-1">${link.service_center ?? ''}</td>
+        table += `<tr class="hover:bg-gray-50">
+          <td class="border px-3 py-2">${link.proivider ?? ''}</td>
+          <td class="border px-3 py-2">${link.fttx ?? ''}</td>
+          <td class="border px-3 py-2">${link.speed ?? ''}</td>
+          <td class="border px-3 py-2">${link.start_date ?? ''}</td>
+          <td class="border px-3 py-2">${link.last_service ?? ''}</td>
+          <td class="border px-3 py-2">${link.service_center ?? ''}</td>
         </tr>`;
       });
       table += '</tbody></table>';
       modalContent.innerHTML = table;
     })
     .catch(() => {
-      modalContent.innerHTML = '<p class="text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+      modalContent.innerHTML = '<p class="text-red-500 py-4">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
     });
 }
 
@@ -117,16 +142,45 @@ function closeModal() {
   document.getElementById('internetLinkModal').classList.add('hidden');
 }
 
+const cardsPerPage = 6; // 2 แถว (ถ้า 3 columns)
+let currentPage = 1;
+
+function showPage(page) {
+  const cards = document.querySelectorAll('.branch-card');
+  const totalPages = Math.ceil(cards.length / cardsPerPage);
+  currentPage = Math.max(1, Math.min(page, totalPages));
+
+  cards.forEach((card, i) => {
+    card.style.display = (i >= (currentPage-1)*cardsPerPage && i < currentPage*cardsPerPage) ? '' : 'none';
+  });
+
+  // Render pagination
+  const pagination = document.getElementById('pagination');
+  pagination.innerHTML = '';
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.className = 'px-3 py-1 rounded ' + (i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-100');
+    btn.onclick = () => showPage(i);
+    pagination.appendChild(btn);
+  }
+}
+
+// เรียกแสดงหน้าแรกเมื่อโหลด
+showPage(1);
+
+// ถ้ามีการค้นหา ให้แสดงผลลัพธ์แบบ paginate
 document.getElementById('searchInput').addEventListener('input', function () {
   const keyword = this.value.trim().toLowerCase();
   const cards = document.querySelectorAll('.branch-card');
   let found = false;
-
+  let visibleCards = [];
   cards.forEach(card => {
     const code = card.getAttribute('data-branch-code');
     const name = card.getAttribute('data-branch-name');
     if (code.includes(keyword) || name.includes(keyword)) {
       card.style.display = '';
+      visibleCards.push(card);
       found = true;
     } else {
       card.style.display = 'none';
@@ -142,8 +196,30 @@ document.getElementById('searchInput').addEventListener('input', function () {
       emptyMsg.textContent = 'ไม่พบข้อมูลสาขาที่ตรงกับคำค้นหา';
       document.getElementById('branchGrid').appendChild(emptyMsg);
     }
+    document.getElementById('pagination').innerHTML = '';
   } else {
     if (emptyMsg) emptyMsg.remove();
+    // paginate เฉพาะผลลัพธ์ที่ค้นหา
+    visibleCards.forEach(card => card.style.display = 'none');
+    let page = 1;
+    const totalPages = Math.ceil(visibleCards.length / cardsPerPage);
+    function showSearchPage(p) {
+      page = Math.max(1, Math.min(p, totalPages));
+      visibleCards.forEach((card, i) => {
+        card.style.display = (i >= (page-1)*cardsPerPage && i < page*cardsPerPage) ? '' : 'none';
+      });
+      // Render pagination
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.className = 'px-3 py-1 rounded ' + (i === page ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-100');
+        btn.onclick = () => showSearchPage(i);
+        pagination.appendChild(btn);
+      }
+    }
+    showSearchPage(1);
   }
 });
 </script>

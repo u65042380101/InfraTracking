@@ -28,16 +28,36 @@ class InternetLink(models.Model):
     def __str__(self):
         return f"{self.branch_name} - {self.proivider}"
 
+DEVICE_CHOICES = [
+    ('Aruba', 'Aruba'),
+    ('Microtik', 'Microtik'),
+    ('Microtik+Aruba', 'Microtik+Aruba'),
+    ('Router', 'Router'),
+    ('Aruba+Dlink', 'Aruba+Dlink'),
+    ('Pc', 'Pc'),
+    ('IP Phone', 'IP Phone'),
+    ('SmartCARD', 'SmartCARD'),
+    ('HUB', 'HUB'),
+    ('ZIMBRA MAIL', 'ZIMBRA MAIL'),
+]
+
+STATUS_CHOICES = [
+    (1, 'แก้ไขแล้ว'),
+    (2, 'กำลังรอดำเนินการ'),
+    (3, 'กำลังจัดเตรียมอุปกรณ์'),
+]
+
 class HelpdeskRecord(models.Model):
     id = models.AutoField(primary_key=True)
+    branch_code = models.CharField(max_length=255)
     branch_name = models.CharField(max_length=255)
-    device = models.CharField(max_length=255)
+    device = models.CharField(max_length=50, choices=DEVICE_CHOICES)
     provider = models.CharField(max_length=255)
     problem = models.CharField(max_length=255)
     solution = models.CharField(max_length=255)
     date = models.DateField()
     by = models.CharField(max_length=255)
-    status = models.IntegerField()
+    status = models.IntegerField(choices=STATUS_CHOICES)
 
     def __str__(self):
         return f"{self.branch_name} - {self.device} - {self.problem}"
