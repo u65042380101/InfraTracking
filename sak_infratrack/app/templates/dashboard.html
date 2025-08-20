@@ -92,6 +92,7 @@
 </div>
 
 <script>
+/* ===== Modal (เหมือนเดิม) ===== */
 function showInternetLinks(branchCode, branchName) {
   const modal = document.getElementById('internetLinkModal');
   const modalContent = document.getElementById('modalContent');
@@ -137,90 +138,126 @@ function showInternetLinks(branchCode, branchName) {
       modalContent.innerHTML = '<p class="text-red-500 py-4">❌ เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
     });
 }
-
 function closeModal() {
   document.getElementById('internetLinkModal').classList.add('hidden');
 }
 
+/* ===== Pagination (ปรับเฉพาะส่วนนี้) ===== */
 const cardsPerPage = 6; // 2 แถว (ถ้า 3 columns)
 let currentPage = 1;
+let filteredCards = null;   // เก็บชุดการ์ดที่ใช้งาน (ทั้งหมด/ผลค้นหา)
 
-function showPage(page) {
-  const cards = document.querySelectorAll('.branch-card');
-  const totalPages = Math.ceil(cards.length / cardsPerPage);
-  currentPage = Math.max(1, Math.min(page, totalPages));
+const paginationEl = document.getElementById('pagination');
+const gridEl = document.getElementById('branchGrid');
+const allCards = Array.from(document.querySelectorAll('.branch-card'));
 
+function renderCards(page, cards) {
+  const totalPages = Math.max(1, Math.ceil(cards.length / cardsPerPage));
+  currentPage = Math.min(Math.max(1, page), totalPages);
+
+  // แสดงเฉพาะการ์ดของหน้าปัจจุบัน
   cards.forEach((card, i) => {
-    card.style.display = (i >= (currentPage-1)*cardsPerPage && i < currentPage*cardsPerPage) ? '' : 'none';
+    const idx = i + 1;
+    const start = (currentPage - 1) * cardsPerPage + 1;
+    const end   = currentPage * cardsPerPage;
+    card.style.display = (idx >= start && idx <= end) ? '' : 'none';
   });
 
-  // Render pagination
-  const pagination = document.getElementById('pagination');
-  pagination.innerHTML = '';
-  for (let i = 1; i <= totalPages; i++) {
-    const btn = document.createElement('button');
-    btn.textContent = i;
-    btn.className = 'px-3 py-1 rounded ' + (i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-100');
-    btn.onclick = () => showPage(i);
-    pagination.appendChild(btn);
-  }
+  // ซ่อนการ์ดอื่นๆ (ที่ไม่อยู่ใน filteredCards)
+  const others = allCards.filter(c => !cards.includes(c));
+  others.forEach(c => c.style.display = 'none');
+
+  renderPagination(totalPages, (p) => renderCards(p, cards));
 }
 
-// เรียกแสดงหน้าแรกเมื่อโหลด
-showPage(1);
+function renderPagination(totalPages, onGoto) {
+  paginationEl.innerHTML = '';
 
-// ถ้ามีการค้นหา ให้แสดงผลลัพธ์แบบ paginate
+  const maxButtons = 7; // โชว์เลขหน้าสูงสุดพร้อมกัน
+  const makeBtn = (label, page, opts={}) => {
+    const { disabled=false, active=false } = opts;
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.className = 'px-3 py-1 rounded mx-1 ' +
+      (active ? 'bg-blue-600 text-white'
+              : disabled ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                         : 'bg-gray-200 text-gray-700 hover:bg-blue-100');
+    b.disabled = disabled;
+    if (!disabled && !active) b.onclick = () => onGoto(page);
+    return b;
+  };
+  const dots = () => {
+    const s = document.createElement('span');
+    s.textContent = '…';
+    s.className = 'px-2 text-gray-500';
+    return s;
+  };
+
+  // Prev
+  paginationEl.appendChild(makeBtn('Prev', currentPage - 1, { disabled: currentPage === 1 }));
+
+  // คำนวณช่วงเลขหน้า (window)
+  let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+  let end = start + maxButtons - 1;
+  if (end > totalPages) {
+    end = totalPages;
+    start = Math.max(1, end - maxButtons + 1);
+  }
+
+  // First + dots
+  if (start > 1) {
+    paginationEl.appendChild(makeBtn('1', 1));
+    if (start > 2) paginationEl.appendChild(dots());
+  }
+
+  for (let i = start; i <= end; i++) {
+    paginationEl.appendChild(makeBtn(String(i), i, { active: i === currentPage }));
+  }
+
+  // dots + Last
+  if (end < totalPages) {
+    if (end < totalPages - 1) paginationEl.appendChild(dots());
+    paginationEl.appendChild(makeBtn(String(totalPages), totalPages));
+  }
+
+  // Next
+  paginationEl.appendChild(makeBtn('Next', currentPage + 1, { disabled: currentPage === totalPages }));
+}
+
+/* ===== ค้นหา (คง UI เดิม เพิ่มให้ใช้ pagination เดียวกัน) ===== */
 document.getElementById('searchInput').addEventListener('input', function () {
   const keyword = this.value.trim().toLowerCase();
-  const cards = document.querySelectorAll('.branch-card');
-  let found = false;
-  let visibleCards = [];
-  cards.forEach(card => {
-    const code = card.getAttribute('data-branch-code');
-    const name = card.getAttribute('data-branch-name');
-    if (code.includes(keyword) || name.includes(keyword)) {
-      card.style.display = '';
-      visibleCards.push(card);
-      found = true;
-    } else {
-      card.style.display = 'none';
-    }
-  });
 
+  // ลบข้อความว่างเปล่าถ้ามี
   let emptyMsg = document.getElementById('emptyMsg');
-  if (!found) {
-    if (!emptyMsg) {
-      emptyMsg = document.createElement('p');
-      emptyMsg.id = 'emptyMsg';
-      emptyMsg.className = 'col-span-full text-center text-gray-500 py-6';
-      emptyMsg.textContent = 'ไม่พบข้อมูลสาขาที่ตรงกับคำค้นหา';
-      document.getElementById('branchGrid').appendChild(emptyMsg);
-    }
-    document.getElementById('pagination').innerHTML = '';
+  if (emptyMsg) emptyMsg.remove();
+
+  if (keyword === '') {
+    filteredCards = allCards;
   } else {
-    if (emptyMsg) emptyMsg.remove();
-    // paginate เฉพาะผลลัพธ์ที่ค้นหา
-    visibleCards.forEach(card => card.style.display = 'none');
-    let page = 1;
-    const totalPages = Math.ceil(visibleCards.length / cardsPerPage);
-    function showSearchPage(p) {
-      page = Math.max(1, Math.min(p, totalPages));
-      visibleCards.forEach((card, i) => {
-        card.style.display = (i >= (page-1)*cardsPerPage && i < page*cardsPerPage) ? '' : 'none';
-      });
-      // Render pagination
-      const pagination = document.getElementById('pagination');
-      pagination.innerHTML = '';
-      for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        btn.className = 'px-3 py-1 rounded ' + (i === page ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-100');
-        btn.onclick = () => showSearchPage(i);
-        pagination.appendChild(btn);
-      }
-    }
-    showSearchPage(1);
+    filteredCards = allCards.filter(card => {
+      const code = card.getAttribute('data-branch-code') || '';
+      const name = card.getAttribute('data-branch-name') || '';
+      return code.includes(keyword) || name.includes(keyword);
+    });
   }
+
+  if (filteredCards.length === 0) {
+    allCards.forEach(c => c.style.display = 'none');
+    paginationEl.innerHTML = '';
+    emptyMsg = document.createElement('p');
+    emptyMsg.id = 'emptyMsg';
+    emptyMsg.className = 'col-span-full text-center text-gray-500 py-6';
+    emptyMsg.textContent = 'ไม่พบข้อมูลสาขาที่ตรงกับคำค้นหา';
+    gridEl.appendChild(emptyMsg);
+    return;
+  }
+
+  renderCards(1, filteredCards);
 });
+
+/* ===== แสดงหน้าแรกเมื่อโหลด ===== */
+filteredCards = allCards;
+renderCards(1, filteredCards);
 </script>
 {% endblock %}
