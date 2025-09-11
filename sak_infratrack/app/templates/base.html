@@ -1,37 +1,87 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="th">
-  <head>
-    <meta charset="UTF-8" />
-    <title>{% block title %}infratrack{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      @media print {
-        nav, footer { display: none !important; }
-      }
-    </style>
-  </head>
-  <body class="bg-gray-100 text-sm">
-    <nav
-      class="bg-blue-600 text-white px-4 py-3 flex justify-between items-center"
-    >
-      <div class="font-bold text-lg">
-        <a href="{% url 'dashboard' %}" class="font-bold text-lg hover:underline">
-          infratrack Dashboard
-        </a>
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}infratrack{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>@media print { nav, footer { display:none!important; }}</style>
+</head>
+<body class="bg-gray-100 text-sm">
+  <!-- NAVBAR -->
+  <nav class="relative bg-blue-600 text-white px-4 h-14 flex justify-between items-center">
+    <!-- ซ้าย: ชื่อระบบ -->
+    <a href="{% url 'dashboard' %}" class="font-bold text-lg hover:underline">
+      InfraTracking Dashboard
+    </a>
+
+    <!-- ขวา: โปรไฟล์ผู้ใช้ -->
+    {% if user.is_authenticated %}
+      <div class="relative">
+        <button id="userBtn"
+                class="flex items-center gap-2 rounded-full hover:bg-blue-500/30 px-2 py-1"
+                aria-haspopup="true" aria-expanded="false">
+          <img
+            src="{% if request.oidc_user and request.oidc_user.userinfo.picture %}{{ request.oidc_user.userinfo.picture }}{% else %}{% static 'img/GG.png' %}{% endif %}"
+            alt="avatar"
+            class="w-9 h-9 rounded-full ring-2 ring-white/40 object-cover"
+          />
+          <span class="hidden sm:block font-semibold">
+            {{ request.oidc_user.userinfo.preferred_username|default:user.get_full_name|default:user.username }}
+          </span>
+          <svg class="w-4 h-4 hidden sm:block opacity-80" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+
+        <!-- เมนูดรอปดาวน์ -->
+        <div id="userMenu"
+             class="absolute right-0 mt-2 w-52 bg-white text-gray-700 rounded-xl shadow-xl ring-1 ring-black/5 z-50 hidden"
+             role="menu" aria-labelledby="userBtn">
+          <div class="px-4 py-3 border-b">
+            <p class="text-xs text-gray-500">เข้าสู่ระบบโดย</p>
+            <p class="font-semibold truncate">
+              {{ request.oidc_user.userinfo.preferred_username|default:user.get_full_name|default:user.username }}
+            </p>
+          </div>
+          <a href="{% url 'dashboard' %}" class="block px-4 py-2 hover:bg-gray-50" role="menuitem">Dashboard</a>
+          <!-- ✅ ออกจากระบบจริง แล้วให้ settings.py พาไปหน้า login -->
+          <a href="{% url 'login' %}" class="block px-4 py-2 text-red-600 hover:bg-red-50" role="menuitem">Logout</a>
+        </div>
       </div>
-      {% comment %} <div>
-        <a href="{% url 'dashboard' %}" class="mr-4 hover:underline"
-          >Dashboard</a
-        >
-        <a href="{% url 'add_record' %}" class="mr-4 hover:underline">เพิ่มข้อมูล</a>
+    {% else %}
+      <a href="{% url 'login' %}" class="bg-white/15 hover:bg-white/25 px-3 py-1 rounded-lg">Login</a>
+    {% endif %}
+  </nav>
 
-      </div> {% endcomment %}
-    </nav>
+  <!-- MAIN -->
+  <main class="min-h-screen">{% block content %}{% endblock %}</main>
 
-    <main class="min-h-screen">{% block content %}{% endblock %}</main>
+  <!-- FOOTER -->
+  <footer class="bg-gray-800 text-white py-4 text-center">&copy; 2025 Infratracking.</footer>
 
-    <footer class="bg-gray-800 text-white py-4 text-center">
-      &copy; 2025 Help Sak. All rights reserved.
-    </footer>
-  </body>
+  <script>
+    const btn = document.getElementById('userBtn');
+    const menu = document.getElementById('userMenu');
+    if (btn && menu) {
+      btn.addEventListener('click', () => {
+        const hidden = menu.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', String(!hidden));
+      });
+      document.addEventListener('click', (e) => {
+        if (!btn.contains(e.target) && !menu.contains(e.target)) {
+          menu.classList.add('hidden');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          menu.classList.add('hidden');
+          btn.setAttribute('aria-expanded','false');
+        }
+      });
+    }
+  </script>
+</body>
 </html>

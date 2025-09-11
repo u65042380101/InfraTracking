@@ -1,0 +1,318 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+
+  <!-- Bootstrap 5 -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    crossorigin="anonymous"
+  />
+  <!-- Bootstrap Icons -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+    :root{
+      --brand:#0a66c2;
+      --brand-dark:#08539a;
+      --field-bg:rgba(255,255,255,.14);
+      --field-border:rgba(255,255,255,.35);
+      --panel-bg:rgba(255,255,255,.20);
+
+      --input-ice-bg:#eaf2ff;
+      --input-ice-text:#0f172a;
+      --input-ice-placeholder:#64748b;
+      --input-ice-border:rgba(255,255,255,.75);
+    }
+    *{ font-family:"Poppins",sans-serif; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      color:#fff;
+      background:
+        radial-gradient(1200px 600px at 15% 10%, rgba(14,165,233,.22), transparent 60%),
+        radial-gradient(1000px 500px at 85% 70%, rgba(16,185,129,.18), transparent 60%),
+        linear-gradient(135deg, #0b1020 0%, #0a2463 60%, #0a1027 100%),
+        url("{% static 'img/login-bg.jpg' %}") center/cover no-repeat fixed;
+      background-blend-mode: screen, screen, overlay, normal;
+    }
+
+    .login-wrap{
+      min-height:100vh;
+      position:relative;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:0;
+      isolation:isolate;
+    }
+    .divider{
+      position:absolute;
+      left:50%;
+      top:8vh; bottom:8vh;
+      width:1px; background:rgba(255,255,255,.35);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.15) inset;
+      opacity:.8;
+    }
+
+    .left-pane{
+      display:flex; align-items:center; justify-content:center;
+      padding:4rem 2rem; text-align:center;
+    }
+    .left-inner .badge{
+      display:inline-flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.55);
+      padding:.6rem 1.1rem;
+      border-radius:9999px;
+      font-weight:700; letter-spacing:.3px;
+      font-size:18px;
+      color:#fff;
+      text-shadow:0 1px 0 rgba(0,0,0,.25);
+      backdrop-filter: blur(4px);
+      box-shadow:0 0 0 1px rgba(255,255,255,.14) inset, 0 4px 10px rgba(0,0,0,.18);
+    }
+    .left-inner h1{
+      line-height: 1.18;
+      padding-bottom: .10em;
+      margin-top:1.1rem; font-weight:800;
+      font-size:clamp(48px,5vw,5px);
+      line-height:1.05;
+      letter-spacing:.2px;
+      text-transform: lowercase;
+      background:linear-gradient(90deg,#60a5fa,#22d3ee,#ffffff);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+
+    .right-pane{
+      display:flex; align-items:center; justify-content:center;
+      padding:4rem 2rem;
+    }
+    .login-card{
+      width:100%; max-width:440px;
+      background:var(--panel-bg);
+      backdrop-filter: blur(8px);
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:16px;
+      padding:28px 26px;
+      box-shadow: 0 20px 55px rgba(0,0,0,.35);
+    }
+    .login-title{
+      display:flex; align-items:center; gap:.65rem; margin-bottom:1.1rem;
+    }
+    .login-title i{ font-size:28px; }
+    .login-title span{ font-size:22px; font-weight:700; letter-spacing:.3px; }
+
+    .input-wrap{ position:relative; margin-bottom:14px; }
+    .input-wrap i.left{
+      position:absolute; left:12px; top:50%; transform:translateY(-50%);
+      font-size:16px; color:#fff; opacity:.95;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
+    }
+    .toggle-pass{
+      position:absolute; right:10px; top:50%; transform:translateY(-50%);
+      border:0; background:transparent; color:#fff; opacity:.95; cursor:pointer;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
+    }
+
+    .form-control{
+      background: var(--input-ice-bg) !important;
+      border: 1px solid var(--input-ice-border) !important;
+      color: var(--input-ice-text) !important;
+      height: 52px;
+      border-radius: 16px;
+      padding-left: 44px;
+      padding-right: 44px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.7),
+        0 2px 10px rgba(2,6,23,.06);
+      font-size: 16px;
+    }
+    .form-control::placeholder{ color: var(--input-ice-placeholder); }
+    .form-control:focus{
+      border-color: #cfe1ff !important;
+      box-shadow:
+        0 0 0 .2rem rgba(59,130,246,.20),
+        inset 0 1px 0 rgba(255,255,255,.9);
+      background: #eef4ff !important;
+      color: var(--input-ice-text) !important;
+    }
+    .input-wrap:focus-within .left{ opacity:1; }
+
+    .caps-hint{
+      display:none; margin:-6px 2px 10px; font-size:12px; color:#ffe08a;
+    }
+
+    .actions{
+      display:flex; align-items:center; justify-content:space-between;
+      margin:4px 2px 14px; font-size:14px;
+    }
+    .form-check-input{ cursor:pointer; }
+    .form-check-label{ cursor:pointer; }
+
+    .btn-login{
+      width:100%; height:46px;
+      border-radius:12px; background:var(--brand);
+      border:none; color:#fff; font-weight:800; letter-spacing:.4px;
+      transition: transform .05s, background .2s, box-shadow .2s;
+      box-shadow: 0 8px 18px rgba(10,102,194,.35);
+      font-size:16px;
+    }
+    .btn-login:hover{ background:var(--brand-dark); }
+    .btn-login:active{ transform: translateY(1px); }
+
+    .muted{ margin-top:12px; font-size:13px; text-align:right; color:rgba(255,255,255,.9); }
+    .muted a{ color:#fff; text-decoration:underline; }
+
+    .error-box{
+      background:rgba(220,38,38,.2);
+      border:1px solid rgba(220,38,38,.5);
+      color:#fff; border-radius:12px; padding:10px 12px;
+      font-size:14px; margin-bottom:12px;
+    }
+
+    @media (max-width: 992px){
+      .login-wrap{ grid-template-columns:1fr; }
+      .divider{ display:none; }
+      .left-pane{ padding-bottom:0; }
+      .right-pane{ padding-top:1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+
+    <!-- ซ้าย -->
+    <section class="left-pane">
+      <div class="left-inner">
+        <div class="badge">Information Department</div>
+        <h1>infratracking</h1>
+      </div>
+    </section>
+
+    <!-- เส้นแบ่งกลาง -->
+    <div class="divider" aria-hidden="true"></div>
+
+    <!-- ขวา: ฟอร์ม -->
+    <section class="right-pane" aria-label="แบบฟอร์มเข้าสู่ระบบ">
+      <div class="login-card">
+
+        <div class="login-title">
+          <i class="bi bi-person-lock"></i>
+          <span>เข้าสู่ระบบ</span>
+        </div>
+
+        <!-- ✅ แสดง messages (เช่น สมัครสำเร็จ) -->
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="alert alert-success py-2 mb-3">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+
+        {% if form.errors %}
+          <div class="error-box" role="alert">
+            {% if form.non_field_errors %}
+              {% for err in form.non_field_errors %}{{ err }}<br/>{% endfor %}
+            {% endif %}
+            {% for field in form %}
+              {% for err in field.errors %}{{ err }}<br/>{% endfor %}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="input-wrap">
+            <label for="username" class="visually-hidden">Username</label>
+            <i class="bi bi-person left"></i>
+            <input type="text"
+                   class="form-control"
+                   id="username"
+                   name="username"
+                   placeholder="Username"
+                   autocomplete="username"
+                   value="{{ form.username.value|default_if_none:'' }}"
+                   required />
+          </div>
+
+          <div class="input-wrap">
+            <label for="password" class="visually-hidden">Password</label>
+            <i class="bi bi-lock left"></i>
+            <input type="password"
+                   class="form-control"
+                   id="password"
+                   name="password"
+                   placeholder="Password"
+                   autocomplete="current-password"
+                   required />
+            <button type="button" id="togglePwd" class="toggle-pass" aria-label="แสดง/ซ่อนรหัสผ่าน">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+
+          <div id="capsHint" class="caps-hint">
+            ↪ เปิด Caps Lock อยู่ โปรดตรวจสอบตัวพิมพ์ใหญ่/เล็ก
+          </div>
+
+          <div class="actions">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="1" id="remember">
+              <label class="form-check-label" for="remember">Remember me</label>
+            </div>
+            <!-- ✅ ลิงก์ไปหน้า register -->
+            <a href="{% url 'register' %}" class="text-white-50">สมัครสมาชิก</a>
+          </div>
+
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
+
+          <button type="submit" id="btnLogin" class="btn-login">
+            LOGIN
+          </button>
+        </form>
+
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    (function(){
+      const pwd = document.getElementById('password');
+      const toggle = document.getElementById('togglePwd');
+      const caps = document.getElementById('capsHint');
+      const form = document.querySelector('form');
+      const btn = document.getElementById('btnLogin');
+
+      toggle?.addEventListener('click', () => {
+        const isText = pwd.type === 'text';
+        pwd.type = isText ? 'password' : 'text';
+        toggle.innerHTML = isText ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+        toggle.setAttribute('aria-pressed', String(!isText));
+        pwd.focus();
+      });
+
+      const toggleCaps = (e) => {
+        const on = e.getModifierState && e.getModifierState('CapsLock');
+        caps.style.display = on ? 'block' : 'none';
+      };
+      ['keyup','keydown','focus'].forEach(ev => pwd.addEventListener(ev, toggleCaps));
+
+      form?.addEventListener('submit', () => {
+        if (!btn) return;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>กำลังเข้าสู่ระบบ…';
+      });
+    })();
+  </script>
+</body>
+</html>

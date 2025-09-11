@@ -8,6 +8,8 @@ from .forms import HelpdeskRecordForm  # ต้องสร้างฟอร์
 from datetime import date
 from django.utils.timezone import now
 
+from .forms import SimpleRegistrationForm
+
 def dashboard(request):
     today = date.today()
     today_count = HelpdeskRecord.objects.filter(date=today).count()
@@ -173,3 +175,15 @@ def summary_report(request):
         'today': today,
         'thai_month': thai_month,
     })
+
+# ✅ ฟังก์ชันสมัครสมาชิก,
+def register(request):
+    if request.method == "POST":
+        form = SimpleRegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "สมัครสมาชิกสำเร็จ! เข้าสู่ระบบได้เลย")
+            return redirect("login")
+    else:
+        form = SimpleRegistrationForm()
+    return render(request, "register.html", {"form": form})   # <<< เปลี่ยนตรงนี้

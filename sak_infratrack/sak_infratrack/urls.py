@@ -16,12 +16,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from app import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.dashboard, name='dashboard'),
+
+    # ✅ root (/) = หน้า Login
+    path('', auth_views.LoginView.as_view(template_name='login.html'), name='root_login'),
+
+    # หน้าหลังล็อกอิน
     path('dashboard/', views.dashboard, name='dashboard'),
+
+    # ทางเข้า/ออกระบบมาตรฐาน
+    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    # ✅ เพิ่มเส้นทางสมัครสมาชิก
+    path('register/', views.register, name='register'),
+
+    # API / views อื่น ๆ
     path('api/internet-links/<str:branch_code>/', views.internet_links_api, name='internet_links_api'),
     path('helpdesk-record/<str:branch_code>/', views.helpdesk_record, name='helpdesk_record'),
     path('add-record/', views.add_record, name='add_record'),
@@ -30,3 +43,4 @@ urlpatterns = [
     path('api/branch-info/', views.branch_info_api, name='branch_info_api'),
     path('summary-report/', views.summary_report, name='summary_report'),
 ]
+

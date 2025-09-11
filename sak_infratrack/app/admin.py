@@ -15,3 +15,4 @@ class InternetLinkAdmin(admin.ModelAdmin):
 class HelpdeskRecordAdmin(admin.ModelAdmin):
     list_display = ['id', 'branch_name', 'device', 'provider', 'problem', 'status', 'date']
     search_fields = ['branch_name', 'device', 'provider', 'problem']
+
