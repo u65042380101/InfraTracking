@@ -11,16 +11,40 @@ from django.utils.timezone import now
 from .forms import SimpleRegistrationForm
 
 def dashboard(request):
+    branch_list = []
+    for branch in BranchInfo.objects.all():
+        pending = HelpdeskRecord.objects.filter(branch_code=branch.branch_code, status=2).count()
+        preparing = HelpdeskRecord.objects.filter(branch_code=branch.branch_code, status=3).count()
+        alert_count = pending + preparing
+        branch_list.append({
+            'branch_code': branch.branch_code,
+            'branch_name': branch.branch_name,
+            'address': branch.address,
+            'district': branch.district,
+            'region': branch.region,
+            'province': branch.province,
+            'mobile_number': branch.mobile_number,
+            'tel_6_digits': branch.tel_6_digits,
+            'alert_count': alert_count,
+        })
+
+    # นับรายการวันนี้ เดือนนี้ ปีนี้
     today = date.today()
     today_count = HelpdeskRecord.objects.filter(date=today).count()
     month_count = HelpdeskRecord.objects.filter(date__year=today.year, date__month=today.month).count()
     year_count = HelpdeskRecord.objects.filter(date__year=today.year).count()
-    branch_list = BranchInfo.objects.all()
+
+    branch_list = sorted(
+        branch_list,
+        key=lambda b: (-1 if b['alert_count'] > 0 else 0, -b['alert_count'])
+    )
+    latest_records = HelpdeskRecord.objects.all().order_by('-date', '-id')[:10]  # 10 รายการล่าสุด
     return render(request, 'dashboard.html', {
         'branch_list': branch_list,
         'today_count': today_count,
         'month_count': month_count,
         'year_count': year_count,
+        'latest_records': latest_records,#10 รายการล่าสุด
     })
 
 def internet_links_api(request, branch_code):
@@ -102,9 +126,12 @@ def edit_record(request, pk):
     if request.method == "POST":
         form = HelpdeskRecordForm(request.POST, instance=record)
         if form.is_valid():
+            # ป้องกันการแก้ไข branch_code และ date
+            form.instance.branch_code = record.branch_code
+            form.instance.date = record.date
             form.save()
-            messages.success(request, "บันทึกการแก้ไขสำเร็จ")
-            return redirect('helpdesk_record', branch_code=form.cleaned_data['branch_code'])
+            # redirect ไปหน้า helpdeskRecord ของสาขานั้น
+            return redirect('helpdesk_record', branch_code=record.branch_code)
     else:
         form = HelpdeskRecordForm(instance=record)
     return render(request, 'edit_record.html', {'form': form})
@@ -161,6 +188,52 @@ def summary_report(request):
          'count': row['count']}
         for row in may_summary
     ]
+
+    # สรุปตามเดือน
+    month_summary = (
+        HelpdeskRecord.objects.values('date__month')
+        .annotate(count=Count('id'))
+        .order_by('date__month')
+    )
+    month_summary_list = []
+    for row in month_summary:
+        bys = HelpdeskRecord.objects.filter(date__month=row['date__month']).values_list('by', flat=True).distinct()
+        month_summary_list.append({
+            'month': row['date__month'],
+            'count': row['count'],
+            'bys': list(bys),
+        })
+
+    # สรุปตามอุปกรณ์ทั้งปี
+    device_summary = (
+        HelpdeskRecord.objects.values('device')
+        .annotate(count=Count('id'))
+        .order_by('device')
+    )
+    device_summary_list = []
+    for row in device_summary:
+        bys = HelpdeskRecord.objects.filter(device=row['device']).values_list('by', flat=True).distinct()
+        device_summary_list.append({
+            'device': row['device'],
+            'count': row['count'],
+            'bys': list(bys),
+        })
+
+    # สรุปตามอุปกรณ์เดือนพฤษภาคม
+    may_summary = (
+        HelpdeskRecord.objects.filter(date__month=5)
+        .values('device')
+        .annotate(count=Count('id'))
+        .order_by('device')
+    )
+    may_summary_list = []
+    for row in may_summary:
+        bys = HelpdeskRecord.objects.filter(device=row['device'], date__month=5).values_list('by', flat=True).distinct()
+        may_summary_list.append({
+            'device': row['device'],
+            'count': row['count'],
+            'bys': list(bys),
+        })
 
     thai_months = [
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",

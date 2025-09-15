@@ -23,7 +23,7 @@
                 class="flex items-center gap-2 rounded-full hover:bg-blue-500/30 px-2 py-1"
                 aria-haspopup="true" aria-expanded="false">
           <img
-            src="{% if request.oidc_user and request.oidc_user.userinfo.picture %}{{ request.oidc_user.userinfo.picture }}{% else %}{% static 'img/GG.png' %}{% endif %}"
+            src="{% if request.oidc_user and request.oidc_user.userinfo.picture %}{{ request.oidc_user.userinfo.picture }}{% else %}{% static 'img/man.png' %}{% endif %}"
             alt="avatar"
             class="w-9 h-9 rounded-full ring-2 ring-white/40 object-cover"
           />

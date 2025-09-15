@@ -27,6 +27,11 @@
         >
           จำนวนรายการ
         </th>
+        <th
+          class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700"
+        >
+          ผู้บันทึก
+        </th>
       </tr>
     </thead>
     <tbody>
@@ -35,6 +40,9 @@
         <td class="border border-gray-300 px-4 py-2">{{ row.month }}</td>
         <td class="border border-gray-300 px-4 py-2 text-center">
           {{ row.count }}
+        </td>
+        <td class="border border-gray-300 px-4 py-2 text-center">
+          {{ row.bys|join:", " }}
         </td>
       </tr>
       {% endfor %}
@@ -50,24 +58,18 @@
   >
     <thead class="bg-gray-100">
       <tr>
-        <th
-          class="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700"
-        >
-          ประเภทอุปกรณ์
-        </th>
-        <th
-          class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700"
-        >
-          จำนวนรายการ
-        </th>
+        <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700">ประเภทอุปกรณ์</th>
+        <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">จำนวนรายการ</th>
+        <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">ผู้บันทึก</th>
       </tr>
     </thead>
     <tbody>
       {% for row in device_summary %}
       <tr class="hover:bg-gray-50">
         <td class="border border-gray-300 px-4 py-2">{{ row.device }}</td>
+        <td class="border border-gray-300 px-4 py-2 text-center">{{ row.count }}</td>
         <td class="border border-gray-300 px-4 py-2 text-center">
-          {{ row.count }}
+          {{ row.bys|join:", " }}
         </td>
       </tr>
       {% endfor %}
@@ -83,24 +85,18 @@
   >
     <thead class="bg-gray-100">
       <tr>
-        <th
-          class="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700"
-        >
-          ประเภทอุปกรณ์
-        </th>
-        <th
-          class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700"
-        >
-          จำนวนรายการ
-        </th>
+        <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700">ประเภทอุปกรณ์</th>
+        <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">จำนวนรายการ</th>
+        <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">ผู้บันทึก</th>
       </tr>
     </thead>
     <tbody>
       {% for row in may_summary %}
       <tr class="hover:bg-gray-50">
         <td class="border border-gray-300 px-4 py-2">{{ row.device }}</td>
+        <td class="border border-gray-300 px-4 py-2 text-center">{{ row.count }}</td>
         <td class="border border-gray-300 px-4 py-2 text-center">
-          {{ row.count }}
+          {{ row.bys|join:", " }}
         </td>
       </tr>
       {% endfor %}
