@@ -48,8 +48,12 @@
       </div>
       <div>
         <label class="block text-gray-700 font-semibold mb-1">วันที่</label>
-        {{ form.date }}
+        <input type="date" name="date" value="{{ form.date.value|date:'Y-m-d' }}"
+          class="w-full border-gray-300 rounded-lg p-2" />
       </div>
+
+
+
       <div>
         <label>ผู้บันทึก</label>
         <input type="text" value="{{ form.by.value }}" class="w-full border-gray-300 rounded-lg p-2 bg-gray-100"
