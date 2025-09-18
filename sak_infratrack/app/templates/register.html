@@ -94,7 +94,7 @@
 
   <main class="auth-card position-relative">
     <div class="avatar">
-      <img src="{% static 'img/man.png' %}" alt="avatar" style="width:60%; height:60%; object-fit:contain;">
+      <img src="{% static 'img/sak.png' %}" alt="avatar" style="width:60%; height:60%; object-fit:contain;">
     </div>
     <h1 class="title">สมัครสมาชิก</h1>
 
@@ -130,11 +130,11 @@
         ↪ เปิด Caps Lock อยู่
       </div>
 
-      <button id="btnRegister" class="btn-primary-dark" type="submit">สร้างบัญชี</button>
+      <button id="btnRegister" class="btn-primary-dark" type="submit">สมัครสมาชิก</button>
     </form>
 
     <div class="foot">
-      มีบัญชีอยู่แล้ว?
+      มีสมัครสมาชิกอยู่แล้ว?
       <a href="{% url 'login' %}">เข้าสู่ระบบ</a>
     </div>
   </main>
@@ -164,7 +164,7 @@
 
       form?.addEventListener('submit', () => {
         btn.disabled = true;
-        btn.textContent = 'กำลังสร้างบัญชี…';
+        btn.textContent = 'กำลังสมัครสมาชิก…';
       });
     })();
   </script>

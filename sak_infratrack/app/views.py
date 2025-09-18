@@ -145,108 +145,62 @@ def delete_record(request, pk):
     return render(request, 'confirm_delete.html', {'record': record})
 
 def summary_report(request):
-    qs = HelpdeskRecord.objects.filter(status=1)  # 1 = แก้ไขแล้ว
-    month_summary = (
-        qs
-        .values('date__month')
-        .annotate(count=Count('id'))
-        .order_by('date__month')
-    )
-    month_names = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-                   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม']
-    month_summary_list = []
-    total = 0
-    for row in month_summary:
-        month = row['date__month']
-        count = row['count']
-        total += count
-        month_summary_list.append({'month': month_names[month-1], 'count': count})
-    month_summary_list.append({'month': 'รวมทั้งหมด', 'count': total})
+    # ใช้เฉพาะสำหรับส่วนรวมทั้งปี (อุปกรณ์/ผู้บันทึก) ให้คง status=1 ได้
+    qs = HelpdeskRecord.objects.filter(status=1)
 
-    # 2) สรุปปัญหาที่แก้ไข (รวมทั้งปี)
-    device_summary = (
-        qs.values('device')
-        .annotate(count=Count('id'))
-        .order_by('device')
-    )
-    device_summary_list = [
-        {'device': dict(HelpdeskRecord._meta.get_field('device').choices).get(row['device'], row['device']),
-         'count': row['count']}
-        for row in device_summary
-    ]
-
-    # 3) สรุปปัญหาที่แก้ไข (เดือนล่าสุด)
-    now = timezone.now()
-    may_qs = qs.filter(date__month=now.month)
-    may_summary = (
-        may_qs.values('device')
-        .annotate(count=Count('id'))
-        .order_by('device')
-    )
-    may_summary_list = [
-        {'device': dict(HelpdeskRecord._meta.get_field('device').choices).get(row['device'], row['device']),
-         'count': row['count']}
-        for row in may_summary
-    ]
-
-    # สรุปตามเดือน
-    month_summary = (
-        HelpdeskRecord.objects.values('date__month')
-        .annotate(count=Count('id'))
-        .order_by('date__month')
-    )
-    month_summary_list = []
-    for row in month_summary:
-        bys = HelpdeskRecord.objects.filter(date__month=row['date__month']).values_list('by', flat=True).distinct()
-        month_summary_list.append({
-            'month': row['date__month'],
-            'count': row['count'],
-            'bys': list(bys),
-        })
-
-    # สรุปตามอุปกรณ์ทั้งปี
-    device_summary = (
-        HelpdeskRecord.objects.values('device')
-        .annotate(count=Count('id'))
-        .order_by('device')
-    )
-    device_summary_list = []
-    for row in device_summary:
-        bys = HelpdeskRecord.objects.filter(device=row['device']).values_list('by', flat=True).distinct()
-        device_summary_list.append({
-            'device': row['device'],
-            'count': row['count'],
-            'bys': list(bys),
-        })
-
-    # สรุปตามอุปกรณ์เดือนพฤษภาคม
-    may_summary = (
-        HelpdeskRecord.objects.filter(date__month=5)
-        .values('device')
-        .annotate(count=Count('id'))
-        .order_by('device')
-    )
-    may_summary_list = []
-    for row in may_summary:
-        bys = HelpdeskRecord.objects.filter(device=row['device'], date__month=5).values_list('by', flat=True).distinct()
-        may_summary_list.append({
-            'device': row['device'],
-            'count': row['count'],
-            'bys': list(bys),
-        })
+    # -----------------------------
+    # 1) สรุปจำนวนปัญหาที่แก้ไข (ตามเดือน) — นับทั้งหมด ไม่สนใจว่าแก้ไขหรือไม่
+    # -----------------------------
+    all_records = HelpdeskRecord.objects.all()
 
     thai_months = [
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
     ]
+    month_summary_list = []
+    total_count = 0
+    for m in range(1, 13):
+        c = all_records.filter(date__month=m).count()
+        total_count += c
+        month_summary_list.append({
+            "month": thai_months[m-1],
+            "count": c,
+        })
+    month_summary_list.append({"month": "รวมทั้งหมด", "count": total_count})
+
+    # -----------------------------
+    # 2) สรุปปัญหาที่แก้ไข (รวมทั้งปี) — ตามอุปกรณ์ (แก้ไขแล้วเท่านั้น)
+    # -----------------------------
+    device_choices = dict(HelpdeskRecord._meta.get_field('device').choices) if HelpdeskRecord._meta.get_field('device').choices else {}
+    device_summary_qs = (
+        qs.values('device')
+          .annotate(count=Count('id'))
+          .order_by('device')
+    )
+    device_summary_list = [
+        {"device": device_choices.get(row["device"], row["device"]), "count": row["count"]}
+        for row in device_summary_qs
+    ]
+
+    # -----------------------------
+    # 3) สรุปตามผู้บันทึก (รวมทั้งปี) — เฉพาะแก้ไขแล้ว
+    # -----------------------------
+    user_summary_qs = (
+        qs.values('by')
+          .annotate(count=Count('id'))
+          .order_by('by')
+    )
+    user_summary_list = [
+        {"by": row["by"], "count": row["count"]}
+        for row in user_summary_qs
+    ]
+
     today = timezone.now().date()
-    thai_month = thai_months[today.month - 1]
     return render(request, 'summary_report.html', {
-        'month_summary': month_summary_list,
-        'device_summary': device_summary_list,
-        'may_summary': may_summary_list,
-        'today': today,
-        'thai_month': thai_month,
+        "today": today,
+        "month_summary": month_summary_list,     # ✅ อัปเดตใหม่ → นับทั้งหมด
+        "device_summary": device_summary_list,   # ยังนับเฉพาะแก้ไขแล้ว
+        "user_summary": user_summary_list,       # ยังนับเฉพาะแก้ไขแล้ว
     })
 
 # ✅ ฟังก์ชันสมัครสมาชิก,

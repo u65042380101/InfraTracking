@@ -1,106 +1,194 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+{% block content %}
+<style>
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+
+    body {
+      font-size: 12px;
+    }
+
+    .print\:hidden { display: none !important; }
+
+    /* ✅ ตารางรายเดือนตรงกลาง */
+    .month-table-wrapper {
+      display: flex;
+      justify-content: center;
+      page-break-inside: avoid;
+      margin-bottom: 20px;
+    }
+    .month-table-wrapper table {
+      width: 70%;  /* ทำให้เล็กลงแล้วจัดตรงกลาง */
+    }
+
+    /* ✅ รวมทั้งปี = กราฟ + ผู้บันทึก ให้อยู่บรรทัดเดียว */
+    .summary-flex {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 15px;
+      page-break-inside: avoid;
+    }
+    .summary-flex > div {
+      flex: 1;
+    }
+
+    #deviceDonutChart {
+      max-width: 200px !important;
+      max-height: 200px !important;
+      margin: 0 auto;
+      display: block;
+    }
+
+    table {
+      border: 1px solid #000;
+      border-collapse: collapse;
+      font-size: 11px;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 4px;
+      text-align: center;
+    }
+    th:first-child, td:first-child {
+      text-align: left;
+    }
+  }
+</style>
+
 <button
+  
   onclick="window.print()"
   class="bg-white border border-gray-300 px-4 py-2 rounded-lg shadow text-gray-700 hover:bg-gray-100 float-right mb-4 print:hidden"
 >
   พิมพ์ / บันทึกเป็น PDF
 </button>
+
 <h1 class="text-xl font-bold mb-2">รายงานสรุปการแก้ไขปัญหา</h1>
 <p class="text-gray-500 mb-6">ออกรายงานวันที่ {{ today|date:"d/m/Y" }}</p>
-<!-- Section Template -->
+
+<!-- 1) สรุปจำนวนปัญหาที่แก้ไข (ตามเดือน) -->
 <div class="mb-6 border rounded-xl p-4 bg-white shadow">
   <div class="font-bold text-gray-700 mb-3">
     1) สรุปจำนวนปัญหาที่แก้ไข (ตามเดือน)
   </div>
-  <table
-    class="min-w-full border-collapse border border-gray-300 rounded-lg overflow-hidden"
-  >
+  <table class="min-w-full border-collapse border border-gray-300 rounded-lg overflow-hidden">
     <thead class="bg-gray-100">
       <tr>
-        <th
-          class="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700"
-        >
-          เดือน
-        </th>
-        <th
-          class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700"
-        >
-          จำนวนรายการ
-        </th>
-        <th
-          class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700"
-        >
-          ผู้บันทึก
-        </th>
+        <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700">เดือน</th>
+        <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">จำนวนรายการ</th>
       </tr>
     </thead>
     <tbody>
       {% for row in month_summary %}
       <tr class="hover:bg-gray-50">
         <td class="border border-gray-300 px-4 py-2">{{ row.month }}</td>
-        <td class="border border-gray-300 px-4 py-2 text-center">
-          {{ row.count }}
-        </td>
-        <td class="border border-gray-300 px-4 py-2 text-center">
-          {{ row.bys|join:", " }}
-        </td>
+        <td class="border border-gray-300 px-4 py-2 text-center">{{ row.count }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+
+<!-- 2) สรุปปัญหาที่แก้ไข (รวมทั้งปี) — โดนัทซ้าย / ผู้บันทึกขวา -->
 <div class="mb-6 border rounded-xl p-4 bg-white shadow">
   <div class="font-bold text-gray-700 mb-3">
     2) สรุปปัญหาที่แก้ไข (รวมทั้งปี)
   </div>
-  <table
-    class="min-w-full border-collapse border border-gray-300 rounded-lg overflow-hidden"
-  >
-    <thead class="bg-gray-100">
-      <tr>
-        <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700">ประเภทอุปกรณ์</th>
-        <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">จำนวนรายการ</th>
-        <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">ผู้บันทึก</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in device_summary %}
-      <tr class="hover:bg-gray-50">
-        <td class="border border-gray-300 px-4 py-2">{{ row.device }}</td>
-        <td class="border border-gray-300 px-4 py-2 text-center">{{ row.count }}</td>
-        <td class="border border-gray-300 px-4 py-2 text-center">
-          {{ row.bys|join:", " }}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-<div class="mb-6 border rounded-xl p-4 bg-white shadow">
-  <div class="font-bold text-gray-700 mb-3">
-    3) สรุปปัญหาที่แก้ไข (เดือนพฤษภาคม)
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+    <!-- โดนัท (ซ้าย) -->
+    <div class="flex justify-center">
+      <canvas id="deviceDonutChart" width="260" height="260"></canvas>
+    </div>
+
+    <!-- ตารางผู้บันทึก (ขวา) -->
+    <div>
+      <div class="font-bold text-gray-700 mb-3">สรุปตามผู้บันทึก (รวมทั้งปี)</div>
+      <table class="min-w-full border-collapse border border-gray-300 rounded-lg overflow-hidden">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700">ผู้บันทึก</th>
+            <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">จำนวนรายการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in user_summary %}
+          <tr class="hover:bg-gray-50">
+            <td class="border border-gray-300 px-4 py-2">{{ row.by }}</td>
+            <td class="border border-gray-300 px-4 py-2 text-center">{{ row.count }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="2" class="text-center text-gray-500 py-2">ไม่มีข้อมูล</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-  <table
-    class="min-w-full border-collapse border border-gray-300 rounded-lg overflow-hidden"
-  >
-    <thead class="bg-gray-100">
-      <tr>
-        <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700">ประเภทอุปกรณ์</th>
-        <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">จำนวนรายการ</th>
-        <th class="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">ผู้บันทึก</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in may_summary %}
-      <tr class="hover:bg-gray-50">
-        <td class="border border-gray-300 px-4 py-2">{{ row.device }}</td>
-        <td class="border border-gray-300 px-4 py-2 text-center">{{ row.count }}</td>
-        <td class="border border-gray-300 px-4 py-2 text-center">
-          {{ row.bys|join:", " }}
-        </td>
-      </tr>
+
+  <!-- โหลด Chart.js + plugin datalabels -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script>
+  (function() {
+    const labels = [
+      {% for row in device_summary %}
+        '{{ row.device|escapejs }}'
+        {% if not forloop.last %},{% endif %}
       {% endfor %}
-    </tbody>
-  </table>
+    ];
+    const dataVals = [
+      {% for row in device_summary %}
+        {{ row.count }}
+        {% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    const ctx = document.getElementById('deviceDonutChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: dataVals,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: false,
+        cutout: '60%',
+        plugins: {
+          legend: { display: false },  // ซ่อน legend ด้านนอก
+          datalabels: {
+            color: '#000',
+            font: { size: 12, weight: 'bold' },
+            formatter: (value, ctx) => {
+              const dataset = ctx.chart.data.datasets[0].data;
+              const total = dataset.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1); // % ปัดทศนิยม 1 ตำแหน่ง
+              const label = ctx.chart.data.labels[ctx.dataIndex];
+              return `${label} ${value} (${percentage}%)`; // ✅ ชื่อ + จำนวน + %
+            }
+          },
+          title: {
+            display: true,
+            text: 'สัดส่วนปัญหาตามประเภทอุปกรณ์ (รวมทั้งปี)',
+            font: { size: 16 }
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  })();
+</script>
+
 </div>
+
 {% endblock %}
