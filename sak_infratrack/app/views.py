@@ -94,6 +94,8 @@ def helpdesk_record(request, branch_code):
         'records': records,
     })
 
+from django.utils import timezone
+
 def add_record(request):
     initial = {}
     branch_code = request.GET.get('branch_code')
@@ -106,20 +108,26 @@ def add_record(request):
             initial = {
                 'branch_code': branch.branch_code,
                 'branch_name': branch.branch_name,
-                'provider': provider,  # เพิ่มบรรทัดนี้
-                # เพิ่ม field อื่นๆ ที่ต้องการ autofill เช่น
-                # 'province': branch.province,
-                # 'address': branch.address,
+                'provider': provider,
             }
+
     if request.method == "POST":
         form = HelpdeskRecordForm(request.POST)
         if form.is_valid():
-            form.save()
+            record = form.save(commit=False)
+            record.by = request.user.username   # ✅ ผู้บันทึก = คนที่ล็อคอิน
+            record.date = timezone.now().date() # ✅ วันที่วันนี้
+            record.save()
             messages.success(request, "บันทึกข้อมูลสำเร็จ")
             return redirect('helpdesk_record', branch_code=form.cleaned_data['branch_code'])
     else:
+        initial.update({
+            "by": request.user.username,       # ✅ autofill
+            "date": timezone.now().date(),     # ✅ autofill
+        })
         form = HelpdeskRecordForm(initial=initial)
-    return render(request, 'add_record.html', {'form': form})
+
+    return render(request, 'add_record.html', {"form": form})
 
 def edit_record(request, pk):
     record = get_object_or_404(HelpdeskRecord, pk=pk)
@@ -145,14 +153,11 @@ def delete_record(request, pk):
     return render(request, 'confirm_delete.html', {'record': record})
 
 def summary_report(request):
-    # ใช้เฉพาะสำหรับส่วนรวมทั้งปี (อุปกรณ์/ผู้บันทึก) ให้คง status=1 ได้
-    qs = HelpdeskRecord.objects.filter(status=1)
-
-    # -----------------------------
-    # 1) สรุปจำนวนปัญหาที่แก้ไข (ตามเดือน) — นับทั้งหมด ไม่สนใจว่าแก้ไขหรือไม่
-    # -----------------------------
     all_records = HelpdeskRecord.objects.all()
 
+    # -----------------------------
+    # 1) สรุปตามเดือน
+    # -----------------------------
     thai_months = [
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
@@ -169,13 +174,13 @@ def summary_report(request):
     month_summary_list.append({"month": "รวมทั้งหมด", "count": total_count})
 
     # -----------------------------
-    # 2) สรุปปัญหาที่แก้ไข (รวมทั้งปี) — ตามอุปกรณ์ (แก้ไขแล้วเท่านั้น)
+    # 2) สรุปตามอุปกรณ์ (ไม่ต้องมีรวมทั้งหมด)
     # -----------------------------
     device_choices = dict(HelpdeskRecord._meta.get_field('device').choices) if HelpdeskRecord._meta.get_field('device').choices else {}
     device_summary_qs = (
-        qs.values('device')
-          .annotate(count=Count('id'))
-          .order_by('device')
+        all_records.values('device')
+        .annotate(count=Count('id'))
+        .order_by('device')
     )
     device_summary_list = [
         {"device": device_choices.get(row["device"], row["device"]), "count": row["count"]}
@@ -183,25 +188,30 @@ def summary_report(request):
     ]
 
     # -----------------------------
-    # 3) สรุปตามผู้บันทึก (รวมทั้งปี) — เฉพาะแก้ไขแล้ว
+    # 3) สรุปตามผู้บันทึก (ให้มีรวมทั้งหมด)
     # -----------------------------
     user_summary_qs = (
-        qs.values('by')
-          .annotate(count=Count('id'))
-          .order_by('by')
+        all_records.values('by')
+        .annotate(count=Count('id'))
+        .order_by('by')
     )
     user_summary_list = [
         {"by": row["by"], "count": row["count"]}
         for row in user_summary_qs
     ]
+    total_users = sum(row["count"] for row in user_summary_list)
+    user_summary_list.append({"by": "รวมทั้งหมด", "count": total_users})
 
     today = timezone.now().date()
     return render(request, 'summary_report.html', {
         "today": today,
-        "month_summary": month_summary_list,     # ✅ อัปเดตใหม่ → นับทั้งหมด
-        "device_summary": device_summary_list,   # ยังนับเฉพาะแก้ไขแล้ว
-        "user_summary": user_summary_list,       # ยังนับเฉพาะแก้ไขแล้ว
+        "month_summary": month_summary_list,
+        "device_summary": device_summary_list,
+        "user_summary": user_summary_list,
     })
+
+
+
 
 # ✅ ฟังก์ชันสมัครสมาชิก,
 def register(request):
