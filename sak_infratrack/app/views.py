@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db.models import Count
 from django.utils import timezone
 from .models import BranchInfo, InternetLink, HelpdeskRecord
-from .forms import HelpdeskRecordForm  # ต้องสร้างฟอร์มนี้ใน forms.py
+from .forms import HelpdeskRecordForm  
 from datetime import date
 from django.utils.timezone import now
 
@@ -155,9 +155,8 @@ def delete_record(request, pk):
 def summary_report(request):
     all_records = HelpdeskRecord.objects.all()
 
-    # -----------------------------
+    
     # 1) สรุปตามเดือน
-    # -----------------------------
     thai_months = [
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
@@ -173,9 +172,9 @@ def summary_report(request):
         })
     month_summary_list.append({"month": "รวมทั้งหมด", "count": total_count})
 
-    # -----------------------------
+    
     # 2) สรุปตามอุปกรณ์ (ไม่ต้องมีรวมทั้งหมด)
-    # -----------------------------
+    
     device_choices = dict(HelpdeskRecord._meta.get_field('device').choices) if HelpdeskRecord._meta.get_field('device').choices else {}
     device_summary_qs = (
         all_records.values('device')
@@ -187,9 +186,8 @@ def summary_report(request):
         for row in device_summary_qs
     ]
 
-    # -----------------------------
+    
     # 3) สรุปตามผู้บันทึก (ให้มีรวมทั้งหมด)
-    # -----------------------------
     user_summary_qs = (
         all_records.values('by')
         .annotate(count=Count('id'))
