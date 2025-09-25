@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db.models import Count
 from django.utils import timezone
 from .models import BranchInfo, InternetLink, HelpdeskRecord
-from .forms import HelpdeskRecordForm  # ต้องสร้างฟอร์มนี้ใน forms.py
+from .forms import HelpdeskRecordForm  
 from datetime import date
 from django.utils.timezone import now
 
@@ -94,6 +94,8 @@ def helpdesk_record(request, branch_code):
         'records': records,
     })
 
+from django.utils import timezone
+
 def add_record(request):
     initial = {}
     branch_code = request.GET.get('branch_code')
@@ -106,20 +108,26 @@ def add_record(request):
             initial = {
                 'branch_code': branch.branch_code,
                 'branch_name': branch.branch_name,
-                'provider': provider,  # เพิ่มบรรทัดนี้
-                # เพิ่ม field อื่นๆ ที่ต้องการ autofill เช่น
-                # 'province': branch.province,
-                # 'address': branch.address,
+                'provider': provider,
             }
+
     if request.method == "POST":
         form = HelpdeskRecordForm(request.POST)
         if form.is_valid():
-            form.save()
+            record = form.save(commit=False)
+            record.by = request.user.username   # ✅ ผู้บันทึก = คนที่ล็อคอิน
+            record.date = timezone.now().date() # ✅ วันที่วันนี้
+            record.save()
             messages.success(request, "บันทึกข้อมูลสำเร็จ")
             return redirect('helpdesk_record', branch_code=form.cleaned_data['branch_code'])
     else:
+        initial.update({
+            "by": request.user.username,       # ✅ autofill
+            "date": timezone.now().date(),     # ✅ autofill
+        })
         form = HelpdeskRecordForm(initial=initial)
-    return render(request, 'add_record.html', {'form': form})
+
+    return render(request, 'add_record.html', {"form": form})
 
 def edit_record(request, pk):
     record = get_object_or_404(HelpdeskRecord, pk=pk)
@@ -145,109 +153,63 @@ def delete_record(request, pk):
     return render(request, 'confirm_delete.html', {'record': record})
 
 def summary_report(request):
-    qs = HelpdeskRecord.objects.filter(status=1)  # 1 = แก้ไขแล้ว
-    month_summary = (
-        qs
-        .values('date__month')
-        .annotate(count=Count('id'))
-        .order_by('date__month')
-    )
-    month_names = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-                   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม']
-    month_summary_list = []
-    total = 0
-    for row in month_summary:
-        month = row['date__month']
-        count = row['count']
-        total += count
-        month_summary_list.append({'month': month_names[month-1], 'count': count})
-    month_summary_list.append({'month': 'รวมทั้งหมด', 'count': total})
+    all_records = HelpdeskRecord.objects.all()
 
-    # 2) สรุปปัญหาที่แก้ไข (รวมทั้งปี)
-    device_summary = (
-        qs.values('device')
-        .annotate(count=Count('id'))
-        .order_by('device')
-    )
-    device_summary_list = [
-        {'device': dict(HelpdeskRecord._meta.get_field('device').choices).get(row['device'], row['device']),
-         'count': row['count']}
-        for row in device_summary
-    ]
-
-    # 3) สรุปปัญหาที่แก้ไข (เดือนล่าสุด)
-    now = timezone.now()
-    may_qs = qs.filter(date__month=now.month)
-    may_summary = (
-        may_qs.values('device')
-        .annotate(count=Count('id'))
-        .order_by('device')
-    )
-    may_summary_list = [
-        {'device': dict(HelpdeskRecord._meta.get_field('device').choices).get(row['device'], row['device']),
-         'count': row['count']}
-        for row in may_summary
-    ]
-
-    # สรุปตามเดือน
-    month_summary = (
-        HelpdeskRecord.objects.values('date__month')
-        .annotate(count=Count('id'))
-        .order_by('date__month')
-    )
-    month_summary_list = []
-    for row in month_summary:
-        bys = HelpdeskRecord.objects.filter(date__month=row['date__month']).values_list('by', flat=True).distinct()
-        month_summary_list.append({
-            'month': row['date__month'],
-            'count': row['count'],
-            'bys': list(bys),
-        })
-
-    # สรุปตามอุปกรณ์ทั้งปี
-    device_summary = (
-        HelpdeskRecord.objects.values('device')
-        .annotate(count=Count('id'))
-        .order_by('device')
-    )
-    device_summary_list = []
-    for row in device_summary:
-        bys = HelpdeskRecord.objects.filter(device=row['device']).values_list('by', flat=True).distinct()
-        device_summary_list.append({
-            'device': row['device'],
-            'count': row['count'],
-            'bys': list(bys),
-        })
-
-    # สรุปตามอุปกรณ์เดือนพฤษภาคม
-    may_summary = (
-        HelpdeskRecord.objects.filter(date__month=5)
-        .values('device')
-        .annotate(count=Count('id'))
-        .order_by('device')
-    )
-    may_summary_list = []
-    for row in may_summary:
-        bys = HelpdeskRecord.objects.filter(device=row['device'], date__month=5).values_list('by', flat=True).distinct()
-        may_summary_list.append({
-            'device': row['device'],
-            'count': row['count'],
-            'bys': list(bys),
-        })
-
+    
+    # 1) สรุปตามเดือน
     thai_months = [
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
     ]
+    month_summary_list = []
+    total_count = 0
+    for m in range(1, 13):
+        c = all_records.filter(date__month=m).count()
+        total_count += c
+        month_summary_list.append({
+            "month": thai_months[m-1],
+            "count": c,
+        })
+    month_summary_list.append({"month": "รวมทั้งหมด", "count": total_count})
+
+    
+    # 2) สรุปตามอุปกรณ์ (ไม่ต้องมีรวมทั้งหมด)
+    
+    device_choices = dict(HelpdeskRecord._meta.get_field('device').choices) if HelpdeskRecord._meta.get_field('device').choices else {}
+    device_summary_qs = (
+        all_records.values('device')
+        .annotate(count=Count('id'))
+        .order_by('device')
+    )
+    device_summary_list = [
+        {"device": device_choices.get(row["device"], row["device"]), "count": row["count"]}
+        for row in device_summary_qs
+    ]
+
+    
+    # 3) สรุปตามผู้บันทึก (ให้มีรวมทั้งหมด)
+    user_summary_qs = (
+        all_records.values('by')
+        .annotate(count=Count('id'))
+        .order_by('by')
+    )
+    user_summary_list = [
+        {"by": row["by"], "count": row["count"]}
+        for row in user_summary_qs
+    ]
+    total_users = sum(row["count"] for row in user_summary_list)
+    user_summary_list.append({"by": "รวมทั้งหมด", "count": total_users})
+
     today = timezone.now().date()
-    thai_month = thai_months[today.month - 1]
     return render(request, 'summary_report.html', {
-        'month_summary': month_summary_list,
-        'device_summary': device_summary_list,
-        'may_summary': may_summary_list,
-        'today': today,
-        'thai_month': thai_month,
+        "today": today,
+        "month_summary": month_summary_list,
+        "device_summary": device_summary_list,
+        "user_summary": user_summary_list,
     })
+
+
+
 
 # ✅ ฟังก์ชันสมัครสมาชิก,
 def register(request):
